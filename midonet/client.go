@@ -31,9 +31,10 @@ func NewClient(conf *types.MidoNetAPIConf) (*Client, error) {
 	c := *conf
 	client := &Client{}
 	if conf.Version != 0 {
+		logrus.Infof("Midonet api version %d", conf.Version)
 		client.version = conf.Version
 	} else {
-		client.version = 5
+		client.version = 1
 	}
 	client.apiConf = c
 	client.mediaV1Map = map[string]string{
@@ -72,19 +73,17 @@ func (c *Client) getMedia(key string) string {
 			return media
 		}
 	}
-	return ""
+	return "application/json"
 }
 
-func (c *Client) getHeader(mediaType string) http.Header {
+func (c *Client) setHeader(header http.Header, mediaType string) {
 	ContentType := c.getMedia(mediaType)
 	if ContentType == "" {
 		ContentType = "application/json"
 	}
-	header := make(http.Header, 0)
 	header.Add("Content-Type", ContentType)
 	header.Add("X-Auth-Token", c.token.Key)
 	header.Add("Connection", "keep-alive")
-	return header
 }
 
 func (c *Client) getHeaderForGet(mediaType string) http.Header {
@@ -142,8 +141,8 @@ func (c *Client) login() error {
 	return fmt.Errorf("Don't Get key After Login")
 }
 
-//CreateBridges 创建租户网桥
-func (c *Client) CreateBridges(bridge *types.Bridge) error {
+//CreateBridge 创建租户网桥
+func (c *Client) CreateBridge(bridge *types.Bridge) error {
 	if bridge.ID == nil {
 		bridge.ID = types.CreateUUID()
 	}
@@ -152,17 +151,19 @@ func (c *Client) CreateBridges(bridge *types.Bridge) error {
 		logrus.Error("Marshal bridge data error,", err.Error())
 		return err
 	}
+	logrus.Info("create bridge:", string(postData))
 	request, err := http.NewRequest("POST", c.apiConf.URL+"/bridges", bytes.NewReader(postData))
 	if err != nil {
 		logrus.Errorln("midonet client create post bridge request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("bridge")
+	c.setHeader(request.Header, "bridge")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create bridge error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -178,12 +179,13 @@ func (c *Client) DeleteBridges(bridgeID *types.UUID) error {
 		logrus.Errorln("midonet client create delete bridge request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("bridge")
+	c.setHeader(request.Header, "bridge")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Delete bridge error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		logrus.Infof("Delete bridge (%s) success", bridgeID)
 		return nil
 	}
@@ -208,12 +210,13 @@ func (c *Client) CreateBridgePort(bridgePort *types.BridgePort) error {
 		logrus.Errorln("midonet client create post bridge port request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("port")
+	c.setHeader(request.Header, "port")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create bridge port error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -237,12 +240,13 @@ func (c *Client) CreateRouterPort(routerPort *types.RouterPort) error {
 		logrus.Errorln("midonet client create post router port  request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("port")
+	c.setHeader(request.Header, "port")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create router port error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -258,12 +262,13 @@ func (c *Client) DeletePort(portID *types.UUID) error {
 		logrus.Errorln("midonet client create delete port request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("port")
+	c.setHeader(request.Header, "port")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Delete port error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		logrus.Infof("Delete port (%s) success", portID)
 		return nil
 	}
@@ -288,12 +293,13 @@ func (c *Client) CreatePortLink(link *types.PortLink) error {
 		logrus.Errorln("midonet client create post  port link  request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("portlink")
+	c.setHeader(request.Header, "portlink")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create port link error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -314,12 +320,14 @@ func (c *Client) CreateRouter(router *types.Router) error {
 		logrus.Errorln("midonet client create post router request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("router")
+	c.setHeader(request.Header, "router")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create router error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	logrus.Info("Create router", res)
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -343,12 +351,13 @@ func (c *Client) CreateRoute(route *types.Route) error {
 		logrus.Errorln("midonet client create post bridge request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("route")
+	c.setHeader(request.Header, "route")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create route error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -372,12 +381,13 @@ func (c *Client) CreateChain(chain *types.Chain) error {
 		logrus.Errorln("midonet client create post chain request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("chain")
+	c.setHeader(request.Header, "chain")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create chain error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -393,12 +403,13 @@ func (c *Client) DeleteChain(chainID *types.UUID) error {
 		logrus.Errorln("midonet client create post chain request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("chain")
+	c.setHeader(request.Header, "chain")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Delete chain error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -422,23 +433,24 @@ func (c *Client) CreateRule(rule *types.Rule) error {
 		logrus.Errorln("midonet client create post bridge request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("rule")
+	c.setHeader(request.Header, "rule")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create rule error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
 }
 
 //BindingInterface 绑定网卡到租户端口
-func (c *Client) BindingInterface(bindingInfo types.HostInterfacePort) error {
+func (c *Client) BindingInterface(bindingInfo *types.HostInterfacePort) error {
 	if bindingInfo.HostID == nil {
 		return fmt.Errorf("host id can not be empty where binding interface")
 	}
-	if bindingInfo.PortID == "" {
+	if bindingInfo.PortID == nil {
 		return fmt.Errorf("port id can not be empty where binding interface")
 	}
 	if bindingInfo.InterfaceName == "" {
@@ -454,12 +466,13 @@ func (c *Client) BindingInterface(bindingInfo types.HostInterfacePort) error {
 		logrus.Errorln("midonet client create post binding interface request error.", err.Error())
 		return err
 	}
-	request.Header = c.getHeader("binding")
+	c.setHeader(request.Header, "binding")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create binding error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -478,6 +491,7 @@ func (c *Client) CreateTenant(tenant *types.Tenant) error {
 		logrus.Error("Marshal tenant data error,", err.Error())
 		return err
 	}
+	logrus.Info("Create tenant:", string(postData))
 	request, err := http.NewRequest("POST", c.apiConf.KeystoneConf.URL+"/tenants", bytes.NewReader(postData))
 	if err != nil {
 		logrus.Errorln("midonet client create post bridge request error.", err.Error())
@@ -485,11 +499,14 @@ func (c *Client) CreateTenant(tenant *types.Tenant) error {
 	}
 	request.Header.Add("X-Auth-Token", c.apiConf.KeystoneConf.Token)
 	request.Header.Add("Connection", "keep-alive")
+	request.Header.Add("content-type", "application/json")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create tenant error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	logrus.Info("Create tenant", res)
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)
@@ -510,8 +527,9 @@ func (c *Client) DeleteTenant(tenantID string) error {
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Delete tenant error.", err.Error())
+		return err
 	}
-	if res.StatusCode/200 == 2 {
+	if res.StatusCode/100 == 2 {
 		return nil
 	}
 	return c.resultErr(res)

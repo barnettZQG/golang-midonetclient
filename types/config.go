@@ -65,17 +65,17 @@ func (u *UUID) MarshalJSON() (data []byte, err error) {
 
 //Tenant 租户
 type Tenant struct {
-	Name        string
-	Enabled     bool
-	ID          string
-	Description string
+	Name        string `json:"name"`
+	Enabled     bool   `json:"enabled"`
+	ID          string `json:"id"`
+	Description string `json:"description"`
 }
 
 //Bridge 网桥
 type Bridge struct {
-	Name                 string
+	Name                 string  `json:"name"`
 	TenantID             string  `json:"tenantId"`
-	ID                   *UUID   `json:"uuid,omitempty"`
+	ID                   *UUID   `json:"id,omitempty"`
 	MacPortTemplate      string  `json:"macPortTemplate,omitempty"`
 	VlanMacPortTemplate  string  `json:"vlanMacPortTemplate,omitempty"`
 	VlanMacTableTemplate string  `json:"vlanMacTableTemplate,omitempty"`
@@ -89,8 +89,8 @@ type Bridge struct {
 
 //Chain 链路
 type Chain struct {
-	ID       *UUID `json:"id,omitempty"`
-	Name     string
+	ID       *UUID  `json:"id,omitempty"`
+	Name     string `json:"name"`
 	TenantID string `json:"tenantId"`
 }
 
@@ -99,14 +99,14 @@ type Route struct {
 	ID               *UUID  `json:"id,omitempty"`
 	DstNetworkAddr   string `json:"dstNetworkAddr"`
 	DstNetworkLength int    `json:"dstNetworkLength"`
-	NextHopGateway   string `json:"nextHopGateway"`
+	NextHopGateway   string `json:"nextHopGateway,omitempty"`
 	NextHopPort      *UUID  `json:"nextHopPort"`
 	SrcNetworkAddr   string `json:"srcNetworkAddr"`
 	SrcNetworkLength int    `json:"srcNetworkLength"`
-	Type             string
-	Weight           int
-	Learned          bool  `json:"learned,omitempty"`
-	RouterID         *UUID `json:"routerId"`
+	Type             string `json:"type"`
+	Weight           int    `json:"weight"`
+	Learned          bool   `json:"learned,omitempty"`
+	RouterID         *UUID  `json:"routerId"`
 }
 
 //Router 路由器
@@ -119,14 +119,14 @@ type Router struct {
 	OutboundMirrorIDs []*UUID `json:"outboundMirrorIds,omitempty"`
 	AsNumber          int     `json:"asNumber,omitempty"`
 	LoadBalancerID    *UUID   `json:"loadBalancerId,omitempty"`
-	Name              string
-	TenantID          string `json:"tenantId"`
+	Name              string  `json:"name"`
+	TenantID          string  `json:"tenantId"`
 }
 
 //Rule 规则
 type Rule struct {
-	ID                 *UUID `json:"id,omitempty"`
-	Type               string
+	ID                 *UUID       `json:"id,omitempty"`
+	Type               string      `json:"type"`
 	CondInvert         bool        `json:"condInvert,omitempty"`
 	DlDst              string      `json:"dlDst,omitempty"`
 	DlSrc              string      `json:"dlSrc,omitempty"`
@@ -190,8 +190,8 @@ type MinMax struct {
 
 //Port 通信端口
 type Port struct {
-	ID                *UUID `json:"id,omitempty"`
-	Type              string
+	ID                *UUID   `json:"id,omitempty"`
+	Type              string  `json:"type"`
 	AdminStateUp      bool    `json:"adminStateUp,omitempty"`
 	InboundFilterID   *UUID   `json:"inboundFilterId,omitempty"`
 	InboundMirrorIDs  []*UUID `json:"inboundMirrorIds,omitempty"`
