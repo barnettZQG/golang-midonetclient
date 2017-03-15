@@ -478,6 +478,35 @@ func (c *Client) BindingInterface(bindingInfo *types.HostInterfacePort) error {
 	return c.resultErr(res)
 }
 
+//DeleteBinding 删除绑定
+func (c *Client) DeleteBinding(bindingInfo *types.HostInterfacePort) error {
+	if bindingInfo.HostID == nil {
+		return fmt.Errorf("host id can not be empty where delete binding interface")
+	}
+	if bindingInfo.PortID == nil {
+		return fmt.Errorf("port id can not be empty where delete binding interface")
+	}
+	if bindingInfo.InterfaceName == "" {
+		return fmt.Errorf("interface name can not be empty where delete binding interface")
+	}
+
+	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/hosts/%s/ports/%s", bindingInfo.HostID, bindingInfo.PortID), nil)
+	if err != nil {
+		logrus.Errorln("midonet client create delete binding interface request error.", err.Error())
+		return err
+	}
+	c.setHeader(request.Header, "binding")
+	res, err := c.getHTTPClient().Do(request)
+	if err != nil {
+		logrus.Error("Delete binding error.", err.Error())
+		return err
+	}
+	if res.StatusCode/100 == 2 {
+		return nil
+	}
+	return c.resultErr(res)
+}
+
 //CreateTenant 创建租户
 func (c *Client) CreateTenant(tenant *types.Tenant) error {
 	if tenant.ID == "" {

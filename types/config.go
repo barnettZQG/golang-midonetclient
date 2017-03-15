@@ -133,7 +133,7 @@ type Rule struct {
 	DlDstMask          string      `json:"dlDstMask,omitempty"`
 	DlSrcMask          string      `json:"dlSrcMask,omitempty"`
 	DlType             int         `json:"dlType,omitempty"`
-	FlowAction         string      `json:"flowAction"`
+	FlowAction         string      `json:"flowAction,omitempty"`
 	FragmentPolicy     string      `json:"fragmentPolicy,omitempty"`
 	InPorts            []*UUID     `json:"inPorts,omitempty"`
 	IPAddrGroupDst     *UUID       `json:"ipAddrGroupDst,omitempty"`
@@ -165,8 +165,8 @@ type Rule struct {
 	OutPorts           []*UUID     `json:"outPorts,omitempty"`
 	Position           int         `json:"position,omitempty"`
 	PortGroup          *UUID       `json:"portGroup,omitempty"`
-	TpDst              MinMax      `json:"tpDst,omitempty"`
-	TpSrc              MinMax      `json:"tpSrc,omitempty"`
+	TpDst              *MinMax     `json:"tpDst,omitempty"`
+	TpSrc              *MinMax     `json:"tpSrc,omitempty"`
 	TraversedDevice    *UUID       `json:"traversedDevice,omitempty"`
 	Vlan               bool        `json:"vlan,omitempty"`
 	Action             string      `json:"action,omitempty"`
