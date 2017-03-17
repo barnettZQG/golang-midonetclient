@@ -283,12 +283,14 @@ func (c *Client) CreatePortLink(link *types.PortLink) error {
 	if link.PeerID == nil {
 		return errors.New("create port link peer id can not be empty")
 	}
+	portID := link.PortID
+	link.PortID = nil
 	postData, err := json.Marshal(link)
 	if err != nil {
 		logrus.Error("Marshal port link data error,", err.Error())
 		return err
 	}
-	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/ports/%s/link", link.PortID), bytes.NewReader(postData))
+	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/ports/%s/link", portID), bytes.NewReader(postData))
 	if err != nil {
 		logrus.Errorln("midonet client create post  port link  request error.", err.Error())
 		return err
