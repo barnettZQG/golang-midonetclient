@@ -284,13 +284,8 @@ func (c *Client) CreatePortLink(link *types.PortLink) error {
 		return errors.New("create port link peer id can not be empty")
 	}
 	portID := link.PortID
-	link.PortID = nil
-	postData, err := json.Marshal(link)
-	if err != nil {
-		logrus.Error("Marshal port link data error,", err.Error())
-		return err
-	}
-	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/ports/%s/link", portID), bytes.NewReader(postData))
+	postData := []byte(fmt.Sprintf(`{"peerId":"%s"}`, link.PeerID.String()))
+	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/ports/%s/link", portID.String()), bytes.NewReader(postData))
 	if err != nil {
 		logrus.Errorln("midonet client create post  port link  request error.", err.Error())
 		return err
@@ -299,6 +294,28 @@ func (c *Client) CreatePortLink(link *types.PortLink) error {
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create port link error.", err.Error())
+		return err
+	}
+	if res.StatusCode/100 == 2 {
+		return nil
+	}
+	return c.resultErr(res)
+}
+
+//DeletePortLink 删除端口连接
+func (c *Client) DeletePortLink(portID *types.UUID) error {
+	if portID == nil {
+		return errors.New("delete port link port id can not be empty")
+	}
+	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/ports/%s/link", portID.String()), nil)
+	if err != nil {
+		logrus.Errorln("midonet client delete  port link  request error.", err.Error())
+		return err
+	}
+	c.setHeader(request.Header, "portlink")
+	res, err := c.getHTTPClient().Do(request)
+	if err != nil {
+		logrus.Error("delete port link error.", err.Error())
 		return err
 	}
 	if res.StatusCode/100 == 2 {
@@ -335,6 +352,28 @@ func (c *Client) CreateRouter(router *types.Router) error {
 	return c.resultErr(res)
 }
 
+//DeleteRouter 删除router
+func (c *Client) DeleteRouter(routerID *types.UUID) error {
+	if routerID == nil {
+		return fmt.Errorf("router id can not be empty where delete chain")
+	}
+	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/routers/%s", routerID), nil)
+	if err != nil {
+		logrus.Errorln("midonet client create delete router request error.", err.Error())
+		return err
+	}
+	c.setHeader(request.Header, "router")
+	res, err := c.getHTTPClient().Do(request)
+	if err != nil {
+		logrus.Error("Delete router error.", err.Error())
+		return err
+	}
+	if res.StatusCode/100 == 2 {
+		return nil
+	}
+	return c.resultErr(res)
+}
+
 //CreateRoute 创建route
 func (c *Client) CreateRoute(route *types.Route) error {
 	if route.RouterID == nil {
@@ -350,13 +389,38 @@ func (c *Client) CreateRoute(route *types.Route) error {
 	}
 	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/routers/%s/routes", route.RouterID), bytes.NewReader(postData))
 	if err != nil {
-		logrus.Errorln("midonet client create post bridge request error.", err.Error())
+		logrus.Errorln("midonet client create route request error.", err.Error())
 		return err
 	}
 	c.setHeader(request.Header, "route")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create route error.", err.Error())
+		return err
+	}
+	if res.StatusCode/100 == 2 {
+		return nil
+	}
+	return c.resultErr(res)
+}
+
+//DeleteRoute 删除route
+func (c *Client) DeleteRoute(routerID, routeID *types.UUID) error {
+	if routeID == nil {
+		return fmt.Errorf("route id can not be empty when delete route")
+	}
+	if routerID == nil {
+		return fmt.Errorf("router id can not be empty when delete route")
+	}
+	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/routers/%s/routes/%s", routerID, routeID), nil)
+	if err != nil {
+		logrus.Errorln("midonet client delete  route request error.", err.Error())
+		return err
+	}
+	c.setHeader(request.Header, "route")
+	res, err := c.getHTTPClient().Do(request)
+	if err != nil {
+		logrus.Error("delete route error.", err.Error())
 		return err
 	}
 	if res.StatusCode/100 == 2 {
@@ -402,7 +466,7 @@ func (c *Client) DeleteChain(chainID *types.UUID) error {
 	}
 	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/chains/%s", chainID), nil)
 	if err != nil {
-		logrus.Errorln("midonet client create post chain request error.", err.Error())
+		logrus.Errorln("midonet client create delete chain request error.", err.Error())
 		return err
 	}
 	c.setHeader(request.Header, "chain")
@@ -432,13 +496,36 @@ func (c *Client) CreateRule(rule *types.Rule) error {
 	}
 	request, err := http.NewRequest("POST", c.apiConf.URL+fmt.Sprintf("/chains/%s/rules", rule.ChainID), bytes.NewReader(postData))
 	if err != nil {
-		logrus.Errorln("midonet client create post bridge request error.", err.Error())
+		logrus.Errorln("midonet client create post rule request error.", err.Error())
 		return err
 	}
 	c.setHeader(request.Header, "rule")
 	res, err := c.getHTTPClient().Do(request)
 	if err != nil {
 		logrus.Error("Create rule error.", err.Error())
+		return err
+	}
+	if res.StatusCode/100 == 2 {
+		return nil
+	}
+	return c.resultErr(res)
+}
+
+// DeleteRule 删除rule
+func (c *Client) DeleteRule(ruleID *types.UUID) error {
+	if ruleID == nil {
+		return fmt.Errorf("rule id can not e empty when delete rule")
+	}
+
+	request, err := http.NewRequest("DELETE", c.apiConf.URL+fmt.Sprintf("/rules/%s", ruleID), nil)
+	if err != nil {
+		logrus.Errorln("midonet client delete rule request error.", err.Error())
+		return err
+	}
+	c.setHeader(request.Header, "rule")
+	res, err := c.getHTTPClient().Do(request)
+	if err != nil {
+		logrus.Error("delete rule error.", err.Error())
 		return err
 	}
 	if res.StatusCode/100 == 2 {
