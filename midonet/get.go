@@ -255,7 +255,7 @@ func (c *Client) GetRouterIPsByTenant(tenantID string) []string {
 				if len(allPort) > 0 {
 					for _, port := range allPort {
 						if port.Type == "InteriorRouter" {
-							address = append(address, port.PortAddress)
+							address = append(address, fmt.Sprintf("%s/%d", port.PortAddress, port.NetworkLength))
 						}
 					}
 				}
